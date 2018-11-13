@@ -11,7 +11,7 @@ class Config:
     # mysql 配置信息
     SQLALCHEMY_DATABASE_URI = 'mysql://root:mysql@localhost/my_info'
     # 动态追踪修改
-    SESSION_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # 配置session信息存储在redis中
     SESSION_TYPE = 'redis'
