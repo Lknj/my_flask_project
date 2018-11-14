@@ -1,4 +1,3 @@
-from flask import session
 # 集成管理器脚本
 from flask_script import Manager
 # 数据库迁移的扩展
@@ -16,10 +15,7 @@ Migrate(app, db)
 manage.add_command('db', MigrateCommand)
 
 
-@app.route('/')
-def index():
-    session["itcast"] = 'python18'
-    return 'Hello World!'
 
 if __name__ == '__main__':
+    print(app.url_map)
     app.run()
