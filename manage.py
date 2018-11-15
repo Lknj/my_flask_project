@@ -3,7 +3,7 @@ from flask_script import Manager
 # 数据库迁移的扩展
 from flask_migrate import Migrate, MigrateCommand
 # 导入info目录下的app和db
-from info import create_app, db
+from info import create_app, db, models
 
 app = create_app('development')
 
@@ -15,7 +15,6 @@ Migrate(app, db)
 manage.add_command('db', MigrateCommand)
 
 
-
 if __name__ == '__main__':
-    # print(app.url_map)
-    app.run()
+    print(app.url_map)
+    manage.run()
