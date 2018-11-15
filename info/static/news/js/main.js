@@ -156,7 +156,7 @@ function generateImageCode() {
     imageCodeId = generateUUID();
     // 构造url,　访问后端的接口
     // http://127.0.0.1:5000/image_code?image_coid_id=UUID
-    var url = '/image_code_id?image_code_id=' + imageCodeId
+    var url = '/image_code?image_code_id=' + imageCodeId
     // 操作html页面的img标签src属性，把url存入src
     $('.get_pic_code').attr('src', url);
 }

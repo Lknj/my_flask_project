@@ -1,6 +1,7 @@
 # 导入redis模块
 from redis import StrictRedis
 
+
 class Config:
 
     DEBUG = True
@@ -15,7 +16,10 @@ class Config:
 
     # 配置session信息存储在redis中
     SESSION_TYPE = 'redis'
-    SESSION_REDIS = StrictRedis(host='127.0.0.1', port=6379)
+    # 定义redis 的主机和端口号
+    REDIS_HOST = '127.0.0.1'
+    REDIS_PORT = 6379
+    SESSION_REDIS = StrictRedis(host=REDIS_HOST, port=REDIS_PORT)
     SESSION_USE_SIGNER = True
     # session 有效期的设置，Flask内置的
     PERMANET_SESSION_LIFETIME = 86400
