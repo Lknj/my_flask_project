@@ -10,6 +10,10 @@ from info.utils.response_code import RET
 from info import redis_store, constants
 # 导入正则
 import re
+# 随机数
+import random
+# 导入云通讯
+from info.libs.yuntongxun.sms import CCP
 
 
 @passport_blue.route('/image_code')
@@ -98,5 +102,31 @@ def send_sms_code():
     # 比较图片验证是否正确, 忽略大小写
     if real_image_code.lower() != image_code:
         return jsonify(errno=RET.DATAERR, errmsg="图片验证码错误")
+    # 生成短信随机数
+    sms_code = '%06d' % random.randint(0, 999999)
+    # 存入redis中
+    try:
+        redis_store.setex('SMSCode_' + mobile, constants.SMS_CODE_REDIS_EXPIRES,
+                          sms_code)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="保存数据失败")
+    # 调用云通讯发送短信
+    try:
+        #　构造发送短信对象
+        ccp = CCP()
+        # 第一个参数手机号，第二个参数短信内容，　第三个参数模板id
+        result = ccp.send_template_sms(mobile,
+                              [sms_code, constants.SMS_CODE_REDIS_EXPIRES/60], 1)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.THIRDERR, errmsg="发送短信异常")
+    # 判断发送结果
+    if result == 0:
+        return jsonify(errno=RET.OK, errmsg="发送成功")
+    else:
+        return jsonify(errno=RET.THIRDERR, errmsg="发送失败")
+
+
 
 
