@@ -7,6 +7,8 @@ from flask_session import Session
 # 集成python的标准日志模块
 import logging
 from logging.handlers import RotatingFileHandler
+
+
 # 创建sqlalchemy对象
 db = SQLAlchemy()
 
