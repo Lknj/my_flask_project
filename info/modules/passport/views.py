@@ -8,6 +8,8 @@ from flask import request, jsonify, current_app, make_response
 from info.utils.response_code import RET
 # 导入redis实例，               常量文件
 from info import redis_store, constants
+# 导入正则
+import re
 
 
 @passport_blue.route('/image_code')
@@ -45,3 +47,56 @@ def generate_image_code():
 
         # 返回响应
         return respone
+
+
+@passport_blue.route('/sms_code', methods=['POST'])
+def send_sms_code():
+    """
+    发送短信
+    接收参数-----检查参数------业务逻辑处理------返回结果
+    1. 获取参数，mobile, image, code, image_code_id
+    2. 检查参数，参数必须存在
+    3. 检查手机号的格式，使用正则
+    4. 检查图片验证码是否正确
+    5. 从redis中获取真实的图片验证码
+    6. 判断获取结果是否存在
+    7. 如果存在，先删除redis数据库中的图片验证码，
+    因为图片验证码只能比较一次，本质是只能读取一次redis数据库一次
+    8. 比较图片验证码是否正确
+    9. 生成短信验证码, 六位数
+    10. 存储在redis 数据库中
+    11. 调用云通讯发送短信
+    12. 保存发送结果，用来判断发送是否成功
+    13. 返回结果
+
+    :return:
+    """
+    # 获取post请求的三个参数
+    mobile = request.json.get('mobile')
+    image_code = request.json.get('image_code')
+    image_code_id = request.json.get('image_code_id')
+    # 检查参数的完整性
+    if not all([mobile, image_code, image_code_id]):
+        return jsonify(errno=RET.PARAMERR, errmsg='参数缺失')
+    # 检查参数，手机号格式
+    if not re.match(r'1[3456789]\d{9}$', mobile):
+        return jsonify(errno=RET.PARAMERR, errmsg="手机格式错误")
+    # 根据uuid从redis中获取图片验证码
+    try:
+        real_image_code = redis_store.get('ImageCode_' + image_code_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg='查询数据失败')
+    # 判断获取错误
+    if not real_image_code:
+        return jsonify(errno=RET.NODATA, errmsg='图片验证过期')
+    # 如果获取到了图片验证码，需要把redis中的图片验证码删除，因为只能get一次
+    try:
+        redis_store.delete('ImageCode_' + image_code_id)
+    except Exception as e:
+        current_app.logger.error(e)
+    # 比较图片验证是否正确, 忽略大小写
+    if real_image_code.lower() != image_code:
+        return jsonify(errno=RET.DATAERR, errmsg="图片验证码错误")
+
+
