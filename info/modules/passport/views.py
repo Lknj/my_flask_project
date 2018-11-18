@@ -288,3 +288,17 @@ def login():
     session['nick_name'] = user.nick_name
     # 返回结果
     return jsonify(errno=RET.OK, errmsg="Ok")
+
+@passport_blue.route('/logout')
+def logout():
+    """
+    用户退出
+    本质是清除redis中缓存的用户信息
+
+    :return:
+    """
+    session.pop('user_id', None)
+    session.pop('mobile', None)
+    session.pop('nick_name', None)
+    # 返回结果
+    return jsonify(errno=RET.OK, errmsg="OK")
