@@ -1,13 +1,38 @@
 from flask import session, render_template, current_app
 # 2-----导入蓝图对象，使用蓝图对象
 from . import news_blue
+# 导入模型类
+from info.models import User
 
 
 @news_blue.route('/')
 def index():
-    # session["itcast"] = 'python18'
-    # return 'Hello World!'
-    return render_template('news/index.html')
+    """
+    首页：
+    实现页面右上角的内容，检查用户登录状态，
+    如果用户登录，显示用户登录信息
+    如果未登录，提供注册登录入口
+    1. 从redis中获取用户id
+    2. 根据user_id查询mysql, 获取用户信息
+    3. 把用户信息传给模板
+
+    :return:
+    """
+    user_id = session.get('user_id')
+    user = None
+
+    # 根据user_id读取mysql, 获取用户信息
+    try:
+        user = User.query.get(user_id)  # 返回是个对象
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # 定义字典，用来返回数据
+    data = {
+        'user_info': user.to_dict() if user else None
+    }
+
+    return render_template('news/index.html', data=data)
 
 
 # 加载logo图标，浏览器会默认请求,url地址：http://127.0.0.1:5000/favicon.ico

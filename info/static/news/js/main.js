@@ -113,7 +113,7 @@ $(function(){
         // 发起登录请求
         var params = {
             'mobile': mobile,
-            'password': password,
+            'password': password
 
         }
         // 发送ajax请求
