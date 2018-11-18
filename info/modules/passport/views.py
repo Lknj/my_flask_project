@@ -227,7 +227,7 @@ def register():
     return jsonify(errno=RET.OK, errmsg="OK")
 
 
-@passport_blue.route('login', methods=['POST'])
+@passport_blue.route('/login', methods=['POST'])
 def login():
     """
     用户登陆

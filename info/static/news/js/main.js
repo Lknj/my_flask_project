@@ -93,8 +93,9 @@ $(function(){
 		$(this).find('a')[0].click()
 	})
 
-    // TODO 登录表单提交
+    // 登录表单提交
     $(".login_form_con").submit(function (e) {
+        // 阻止默认提交
         e.preventDefault()
         var mobile = $(".login_form #mobile").val()
         var password = $(".login_form #password").val()
@@ -110,6 +111,27 @@ $(function(){
         }
 
         // 发起登录请求
+        var params = {
+            'mobile': mobile,
+            'password': password,
+
+        }
+        // 发送ajax请求
+        $.ajax({
+            url: '/login',
+            type: 'post',
+            data: JSON.stringify(params),
+            contentType: 'application/json',
+            success: function (resp) {
+                if (resp.errno == '0'){
+                    location.reload();
+                }else{
+                    alert(resp.errmsg);
+                }
+            }
+
+
+        })
     })
 
 
