@@ -65,4 +65,11 @@ def create_app(config_name):
     app.register_blueprint(news_blue)
     from info.modules.passport import passport_blue
     app.register_blueprint(passport_blue)
+
+    # 导入自定义过滤器
+    from info.utils.commons import index_filter
+    # 添加自定义的过滤器
+    app.add_template_filter(index_filter, 'index_filter')
+
+    # 返回app
     return app

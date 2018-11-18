@@ -1,21 +1,25 @@
-from flask import session, render_template, current_app
+from flask import session, render_template, current_app, jsonify
 # 2-----导入蓝图对象，使用蓝图对象
+from info.utils.response_code import RET
 from . import news_blue
 # 导入模型类
-from info.models import User
+from info.models import User, News
+# 导入常量文件
+from info import constants
 
 
 @news_blue.route('/')
 def index():
     """
     首页：
-    实现页面右上角的内容，检查用户登录状态，
+    一. 实现页面右上角的内容，检查用户登录状态，
     如果用户登录，显示用户登录信息
     如果未登录，提供注册登录入口
     1. 从redis中获取用户id
     2. 根据user_id查询mysql, 获取用户信息
     3. 把用户信息传给模板
-
+    二. 新闻点击排行展示：
+    1. 根据新闻的点击次数查询数据库，使用模板渲染
     :return:
     """
     user_id = session.get('user_id')
@@ -27,9 +31,23 @@ def index():
     except Exception as e:
         current_app.logger.error(e)
 
+    # 新闻点击排行查询
+    try:
+        news_list = News.query.order_by(News.clicks.desc()).limit(constants.CLICK_RANK_MAX_NEWS)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询新闻排行失败")
+    # 判断查询结果
+    if not news_list:
+        return jsonify(errno=RET.NODATA, errmsg="无新闻排行数据")
+    # 定义一个容器，存储新闻数据
+    news_click_list = []
+    for news in news_list:
+        news_click_list.append(news.to_dict())
     # 定义字典，用来返回数据
     data = {
-        'user_info': user.to_dict() if user else None
+        'user_info': user.to_dict() if user else None,
+        'news_click_list': news_click_list
     }
 
     return render_template('news/index.html', data=data)
