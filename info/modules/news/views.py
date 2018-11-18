@@ -71,6 +71,7 @@ def index():
 
     return render_template('news/index.html', data=data)
 
+
 @news_blue.route('/news_list')
 def news_list():
     """
@@ -109,7 +110,7 @@ def news_list():
     per_page = request.args.get('per_page', '10')
     # 检查参数
     try:
-        cid.page.per_page = int(cid), int(page), int(per_page)
+        cid, page, per_page = int(cid), int(page), int(per_page)
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.PARAMERR, errmsg="参数类型错误")
@@ -121,7 +122,7 @@ def news_list():
     # 查询数据库
     try:
         # 拆包
-        paginate = News.query.filter(*filters).order_by(News.create_time.desc()).pageinait(page, per_page, False)
+        paginate = News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page, per_page, False)
     except Exception as e:
         current_app.logger.error(e)
         return jsonify(errno=RET.DBERR, errmsg="查询新闻列表失败")
@@ -140,7 +141,8 @@ def news_list():
         'news_dict_list': news_dict_list
     }
     # 返回数据
-    return jsonify(errno=RET.Ok, errmsg="OK")
+    return jsonify(errno=RET.OK, errmsg="OK", data=data)
+
 
 # 加载logo图标，浏览器会默认请求,url地址：http://127.0.0.1:5000/favicon.ico
 # flask 默认创建一个静态路由
