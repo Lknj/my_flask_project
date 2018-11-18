@@ -29,6 +29,10 @@ file_log_handler.setFormatter(formatter)
 # 为全局的日志工具对象（flask app使用的）添加日志记录器
 logging.getLogger().addHandler(file_log_handler)
 
+# 项目开启csrf保护
+from flask_wtf import CSRFProtect, csrf
+
+
 
 # 定义函数，封装程序初始化操作，　--->工厂函数
 # 工厂函数: 生产实例app
@@ -45,6 +49,16 @@ def create_app(config_name):
 
     # 实例化Session
     Session(app)
+
+    # 开启csrf保护
+    CSRFProtect(app)
+
+    # 生成csrf_token, 给每个客户端都设置csrf_token
+    @app.after_request
+    def after_request(response):
+        csrf_token = csrf.generate_csrf()
+        response.set_cookie('csrf_token', csrf_token)
+        return response
 
     # 3----导入蓝图，注册蓝图
     from info.modules.news import news_blue

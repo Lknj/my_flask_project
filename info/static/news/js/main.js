@@ -121,6 +121,9 @@ $(function(){
             url: '/login',
             type: 'post',
             data: JSON.stringify(params),
+            headers: {
+                'X-CSRFToken': getCookie('csrf_token')
+            },
             contentType: 'application/json',
             success: function (resp) {
                 if (resp.errno == '0'){
@@ -179,6 +182,9 @@ $(function(){
             type: 'post',
             data: JSON.stringify(params),
             contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': getCookie('csrf_token')
+            },
             success: function (resp) {
                 if (resp.errno == '0'){
                     location.reload(); // 重新加载当前页面
@@ -240,6 +246,9 @@ function sendSMSCode() {
         type: 'post',
         data: JSON.stringify(params), // 把参数对象转成json
         contentType: 'application/json', // 发送到后端的数据类型
+        headers: {
+            'X-CSRFToken': getCookie('csrf_token')
+        },
         success: function (resp) {
             // 如果发送成功
             if (resp.errno == '0'){
