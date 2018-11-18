@@ -3,7 +3,7 @@ from flask import session, render_template, current_app, jsonify
 from info.utils.response_code import RET
 from . import news_blue
 # 导入模型类
-from info.models import User, News
+from info.models import User, News, Category
 # 导入常量文件
 from info import constants
 
@@ -19,7 +19,9 @@ def index():
     2. 根据user_id查询mysql, 获取用户信息
     3. 把用户信息传给模板
     二. 新闻点击排行展示：
-    1. 根据新闻的点击次数查询数据库，使用模板渲染
+    根据新闻的点击次数查询数据库，使用模板渲染
+    三. 新闻分类展示
+    查询所有新闻分类，使用模板渲染数据
     :return:
     """
     user_id = session.get('user_id')
@@ -44,10 +46,27 @@ def index():
     news_click_list = []
     for news in news_list:
         news_click_list.append(news.to_dict())
+
+    # 新闻分类展示
+    try:
+        categories = Category.query.all()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询新闻分类数据失败")
+    # 判断查询结果
+    if not categories:
+        return jsonify(errno=RET.NODATA, errmsg="无新闻分类数据")
+    # 定义容器，存储新闻分类数据
+    category_list = []
+    # 遍历插叙结果
+    for category in categories:
+        category_list.append(category.to_dict())
+
     # 定义字典，用来返回数据
     data = {
         'user_info': user.to_dict() if user else None,
-        'news_click_list': news_click_list
+        'news_click_list': news_click_list,
+        'category_list': category_list
     }
 
     return render_template('news/index.html', data=data)
