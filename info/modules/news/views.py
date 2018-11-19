@@ -1,3 +1,4 @@
+from flask import g
 from flask import session, render_template, current_app, jsonify, request
 # 2-----导入蓝图对象，使用蓝图对象
 from info.utils.response_code import RET
@@ -6,9 +7,12 @@ from . import news_blue
 from info.models import User, News, Category
 # 导入常量文件
 from info import constants
+# 导入自定义的装饰器
+from info.utils.commons import login_required
 
 
 @news_blue.route('/')
+@login_required
 def index():
     """
     首页：
@@ -24,14 +28,15 @@ def index():
     查询所有新闻分类，使用模板渲染数据
     :return:
     """
-    user_id = session.get('user_id')
-    user = None
-
-    # 根据user_id读取mysql, 获取用户信息
-    try:
-        user = User.query.get(user_id)  # 返回是个对象
-    except Exception as e:
-        current_app.logger.error(e)
+    # user_id = session.get('user_id')
+    # user = None
+    #
+    # # 根据user_id读取mysql, 获取用户信息
+    # try:
+    #     user = User.query.get(user_id)  # 返回是个对象
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    user = g.user
 
     # 新闻点击排行查询
     try:
@@ -142,6 +147,57 @@ def news_list():
     }
     # 返回数据
     return jsonify(errno=RET.OK, errmsg="OK", data=data)
+
+
+@news_blue.route('/<int:news_id>')
+@login_required
+def news_detail(news_id):
+    """
+    新闻详情：
+    1. 根据news_id查询mysql数据库
+    2. 使用模板渲染数据
+
+    """
+    # user_id = session.get('user_id')
+    # user = None
+    #
+    # # 根据user_id读取mysql, 获取用户信息
+    # try:
+    #     user = User.query.get(user_id)  # 返回是个对象
+    # except Exception as e:
+    #     current_app.logger.error(e)
+    user = g.user
+    # 新闻点击排行查询
+    try:
+        news_list = News.query.order_by(News.clicks.desc()).limit(constants.CLICK_RANK_MAX_NEWS)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询新闻排行失败")
+    # 判断查询结果
+    if not news_list:
+        return jsonify(errno=RET.NODATA, errmsg="无新闻排行数据")
+    # 定义一个容器，存储新闻数据
+    news_click_list = []
+    for news in news_list:
+        news_click_list.append(news.to_dict())
+
+    # 查询数据库
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询新闻详情数据失败")
+    # 判断查询结果
+    if not news:
+        return jsonify(errno=RET.NODATA, errmsg="无新闻数据")
+    # 定义容器
+    data = {
+        'news_detail': news.to_dict(),
+        'user_info': user.to_dict() if user else None,
+        'news_click_list': news_click_list
+
+    }
+    return render_template('news/detail.html', data=data)
 
 
 # 加载logo图标，浏览器会默认请求,url地址：http://127.0.0.1:5000/favicon.ico
