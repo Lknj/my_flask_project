@@ -36,8 +36,8 @@ def login_required(f):
             # flask　内置的函数，和request  session 一样，在请求的过程中存在，
             # 请求结束后，被销毁
             # 用来临时存储数据
-        user = g.user
+        g.user = user
         return f(*args, **kwargs)
     # 在返回warpper之前，把被装饰的函数名，赋值给warpper
     # warpper.__name__ = f.__name__
-    return warpper()
+    return warpper

@@ -6,7 +6,7 @@ from . import news_blue
 # 导入模型类
 from info.models import User, News, Category
 # 导入常量文件
-from info import constants
+from info import constants, db
 # 导入自定义的装饰器
 from info.utils.commons import login_required
 
@@ -190,14 +190,84 @@ def news_detail(news_id):
     # 判断查询结果
     if not news:
         return jsonify(errno=RET.NODATA, errmsg="无新闻数据")
+
+    # 定义标记，用来标识用户是否收藏
+    is_collected = False
+    # 判断用户是否登录，以及用户是否收藏该新闻
+    if g.user and news in user.collection_news:
+        is_collected = True
+
     # 定义容器
     data = {
         'news_detail': news.to_dict(),
         'user_info': user.to_dict() if user else None,
-        'news_click_list': news_click_list
+        'news_click_list': news_click_list,
+        'is_collected': is_collected
 
     }
     return render_template('news/detail.html', data=data)
+
+
+@news_blue.route('/news_collect', methods=["POST"])
+@login_required
+def user_collect():
+    """
+    用户收藏取消收藏
+    1. 判断用户是否登录
+    2. 如果没有登录，返回错误信息
+    3. 获取参数，news_id, action[collect, cancel_collect]
+    4. 检查参数的完整性
+    5. 转换参数类型news_id
+    6. 检查action是否是[collect, cancel_collect]
+    7. 判断如果用户选择的是收藏，添加该新闻
+    8. 否则，移除用户收藏的新闻
+    9. 返回结果
+
+    :return:
+    """
+    user = g.user
+    if not user:
+        return jsonify(errno=RET.SESSIONERR, errmsg="用户未登录")
+    # 获取参数
+    news_id = request.json.get('news_id')
+    action = request.json.get('action')
+    # 检查参数
+    if not all([news_id, action]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数缺失")
+    # 转换参数类型
+    try:
+        news_id = int(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.PARAMERR, errmsg="参数类型错误")
+    # 检查action参数
+    if action not in ['collect', 'cancel_collect']:
+        return jsonify(errno=RET.PARAMERR, errmsg="参数格式错误")
+    # 根据news_id查询数据，确认新闻的存在
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询新闻数据失败")
+    # 判断查询结果
+    if not news:
+        return jsonify(errno=RET.NODATA, errmsg="无新闻数据")
+    # 如果用户是收藏
+    if action == 'collect':
+        user.collection_news.append(news)
+    else:
+        user.collection_news.remove(news)
+    # 提交数据
+    try:
+        db.session.add(news)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="新闻收藏失败")
+    # 返回结果
+    return jsonify(errno=RET.OK, errmsg="OK")
+
 
 
 # 加载logo图标，浏览器会默认请求,url地址：http://127.0.0.1:5000/favicon.ico
