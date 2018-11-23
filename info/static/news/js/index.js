@@ -5,6 +5,8 @@ var data_querying = true;   // 是否正在向后台获取数据
 
 
 $(function () {
+    // 调用更新新闻
+    updateNewsData()
     // 首页分类切换
     $('.menu li').click(function () {
         var clickCid = $(this).attr('data-cid')
