@@ -4,7 +4,7 @@ from flask import session, render_template, current_app, jsonify, request
 from info.utils.response_code import RET
 from . import news_blue
 # 导入模型类
-from info.models import User, News, Category, Comment
+from info.models import User, News, Category, Comment, CommentLike
 # 导入常量文件
 from info import constants, db
 # 导入自定义的装饰器
@@ -347,7 +347,68 @@ def news_comments():
     return jsonify(errno=RET.OK, errmsg="OK", data=comment.to_dict())
 
 
+@news_blue.route('/comment_like', methods=["POST"])
+@login_required
+def comment_like():
+    """
+    评论点赞
+    获取参数－－检查参数－－业务处理－－返回结果
+    用户必须登录
+    1. 获取参数，comment_id, news_id, action
+    2. 检查参数
+    3. 判断参数
+    4. 查询评论数据
+    5. 保存点赞信息
+    6. 提交数据
+    7. 返回结果
 
+    :return:
+    """
+    # 确认用户登录
+    user = g.user
+    if not user:
+        return jsonify(errno=RET.SESSIONERR, errmsg="用户为登录")
+    # 获取参数
+    comment_id = request.json.get("comment_id")
+    # news_id = request.json.get("news_id")
+    action = request.json.get("action")
+
+    # 判断参数
+    if not all([comment_id, action]):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数缺失")
+    if action not in ("add", "remove"):
+        return jsonify(errno=RET.PARAMERR, errmsg="参数错误")
+    # 查询评论数据
+    try:
+        comment = Comment.query.get(comment_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=RET.DBERR, errmsg="查询数据失败")
+
+    if action == "add":
+        comment_like = CommentLike.query.filter_by(comment_id=comment_id, user_id=user.id).first()
+        if not comment_like:
+            comment_like = CommentLike()
+            comment_like.comment_id = comment_id
+            comment_like.user_id = user.id
+            db.session.add(comment_like)
+            # 增加点赞条数
+            comment.like_count += 1
+    else:
+        # 删除点赞数据
+        comment_like = CommentLike.query.filter_by(comment_id=comment_id, user_id=user.id).first()
+        if comment_like:
+            db.session.delete(comment_like)
+            # 减小点赞条数
+            comment.like_count -= 1
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=RET.DBERR, errmsg="操作失败")
+    return jsonify(errno=RET.OK, errmsg="操作成功", )
 
 
 # 加载logo图标，浏览器会默认请求,url地址：http://127.0.0.1:5000/favicon.ico
