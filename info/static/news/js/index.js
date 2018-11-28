@@ -40,7 +40,8 @@ $(function () {
 
         // 页面滚动了多少,这个是随着页面滚动实时变化的
         var nowScroll = $(document).scrollTop();
-
+        // 当前页面新闻数据加载完成，再加载下一页
+        // 能滚动的距离减去已经滚动的距离=目前的距离，小于100像素
         if ((canScrollHeight - nowScroll) < 100) {
             // 判断页数，去更新新闻数据
             if (!data_querying){
@@ -50,11 +51,13 @@ $(function () {
                     updateNewsData()
                 }
             }
+
         }
     })
 })
 
 function updateNewsData() {
+
     // 更新新闻数据
     var params = {
         "cid":currentCid,

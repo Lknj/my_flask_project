@@ -33,9 +33,28 @@ $(function(){
 
 
 	// 点击输入框，提示文字上移
-	$('.form_group').on('click focusin',function(){
-		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').siblings('input').focus().parent().addClass('hotline');
+	// $('.form_group').on('click focusin',function(){
+	// 	$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').siblings('input').focus().parent().addClass('hotline');
+	// })
+
+    // 注册框的手机号文字上移
+    $('.form_mobile').on('click focusin',function(){
+		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').focus().parent().addClass('hotline');
 	})
+    // 注册框的图片验证码文字上移
+    $('.form_image').on('click focusin',function(){
+		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').focus().parent().addClass('hotline');
+	})
+    // 注册框的短信验证码文字上移
+    $('.form_sms').on('click focusin',function(){
+		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').focus().parent().addClass('hotline');
+	})
+    // 登录框的密码提示文字上移
+    $('.form_pswd').on('click focusin',function(){
+		$(this).children('.input_tip').animate({'top':-5,'font-size':12},'fast').focus().parent().addClass('hotline');
+	})
+
+
 
 	// 输入框失去焦点，如果输入框为空，则提示文字下移
 	$('.form_group input').on('blur focusout',function(){
@@ -95,7 +114,6 @@ $(function(){
 
     // 登录表单提交
     $(".login_form_con").submit(function (e) {
-        // 阻止默认提交
         e.preventDefault()
         var mobile = $(".login_form #mobile").val()
         var password = $(".login_form #password").val()
@@ -112,20 +130,19 @@ $(function(){
 
         // 发起登录请求
         var params = {
-            'mobile': mobile,
-            'password': password
-
+            'mobile':mobile,
+            'password':password
         }
-        // 发送ajax请求
+        //发送ajax请求
         $.ajax({
-            url: '/login',
-            type: 'post',
-            data: JSON.stringify(params),
-            headers: {
-                'X-CSRFToken': getCookie('csrf_token')
+            url:'/login',
+            type:'post',
+            data:JSON.stringify(params),
+            contentType:'application/json',
+            headers:{
+                'X-CSRFToken':getCookie('csrf_token')
             },
-            contentType: 'application/json',
-            success: function (resp) {
+            success:function(resp){
                 if (resp.errno == '0'){
                     location.reload();
                 }else{
@@ -133,8 +150,8 @@ $(function(){
                 }
             }
 
-
         })
+
     })
 
 
@@ -171,47 +188,45 @@ $(function(){
         // 发起注册请求
         // 构造参数
         var params = {
-            'mobile': mobile,
-            'sms_code': smscode,
-            'password': password,
-
+            'mobile':mobile,
+            'sms_code':smscode,
+            'password':password
         }
-        // 发送ajax请求
+    //    发送ajax请求
         $.ajax({
-            url: '/register',
-            type: 'post',
-            data: JSON.stringify(params),
-            contentType: 'application/json',
-            headers: {
-                'X-CSRFToken': getCookie('csrf_token')
+            url:'/register',
+            type:'post',
+            data:JSON.stringify(params),
+            contentType:'application/json',
+            headers:{
+                'X-CSRFToken':getCookie('csrf_token')
             },
-            success: function (resp) {
+            success:function(resp){
                 if (resp.errno == '0'){
-                    location.reload(); // 重新加载当前页面
+                    location.reload();
                 }else{
                     alert(resp.errmsg);
-                    // $('#register-image-code-err').html(resp.errmsg)
-                    // $('#register-image-code-err').show()
+                    // $('#register-password-err').html(resp.errmsg);
+                    // $('#register-password-err').show();
                 }
             }
-
         })
 
 
     })
 })
 
-// 全局变量，生成uuid，下次再传给后端用来比较用户输入输欧正确
+// 全局变量,生成uuid，下次再传给后端用来比较用户输入是否正确。
 var imageCodeId = ""
 
 // 生成一个图片验证码的编号，并设置页面中图片验证码img标签的src属性
 function generateImageCode() {
     imageCodeId = generateUUID();
-    // 构造url,　访问后端的接口
-    // http://127.0.0.1:5000/image_code?image_coid_id=UUID
+    // 构造url，访问后端的接口
+    // http://127.0.0.1:5000/image_code?image_code_id=UUID
     var url = '/image_code?image_code_id=' + imageCodeId
-    // 操作html页面的img标签src属性，把url存入src
-    $('.get_pic_code').attr('src', url);
+    // 操作html页面的img标签的src属性，把url存入src
+    $('.get_pic_code').attr('src',url);
 }
 
 // 发送短信验证码
@@ -234,46 +249,51 @@ function sendSMSCode() {
     }
 
     // 发送短信验证码
+    // 定义参数对象
     var params = {
-        "mobile": mobile,
-        'image_code': imageCode,
-        'image_code_id': imageCodeId,
-
+        'mobile':mobile,
+        'image_code':imageCode,
+        'image_code_id':imageCodeId
     }
+
     // 发送ajax请求
     $.ajax({
-        url: '/sms_code',
-        type: 'post',
-        data: JSON.stringify(params), // 把参数对象转成json
-        contentType: 'application/json', // 发送到后端的数据类型
-        headers: {
-            'X-CSRFToken': getCookie('csrf_token')
+        url:'/sms_code',
+        type:'post',
+        data:JSON.stringify(params),// 把参数对象转成json
+        contentType:'application/json',// 发送到后端的数据类型
+        headers:{
+                'X-CSRFToken':getCookie('csrf_token')
         },
-        success: function (resp) {
+        success:function(resp){
             // 如果发送成功
             if (resp.errno == '0'){
-                // 使用定时器来控制发送
+                // 使用定时器，控制发送
                 var num = 60;
-                var t = setInterval(function () {
+                var t = setInterval(function(){
                     if (num == 0){
+                        // 清除定时器对象
                         clearInterval(t);
-                        $('.get_code').attr('onclick', 'sendSMSCode()');
+                        $('.get_code').attr('onclick','sendSMSCode();');
                         $('.get_code').html('点击获取验证码');
-
-
                     }else{
                         num -= 1;
                         $('.get_code').html(num + '秒')
                     }
-                }, 1000)
+                },1000)
             }else{
                 alert(resp.errmsg);
-                // $('#register-image-code-err').html(resp.errmsg);
-                // $('#register-image-code-err').show()
+                // 图片验证码错误后，自动刷新，添加事件。
+                // generateImageCode();
+                // $('.get_code').attr('onclick','sendSMSCode();');
+                // $('.get_code').html('点击获取验证码');
+                // $('#register-sms-code-err').html(resp.errmsg);
+                // $('#register-sms-code-err').show();
 
             }
         }
     })
+
 
 
 }
@@ -314,8 +334,9 @@ function generateUUID() {
 }
 
 // 用户退出
-function logout() {
-    $.get('/logout', function (resp) {
+function logout(){
+    $.get('/logout',function(resp){
         location.reload()
     })
 }
+
